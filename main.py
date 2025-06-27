@@ -163,8 +163,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 *Welcome to the Premium AI Image Bot!*\n"
-        "🔑 Use `/setkey <YOUR_API_KEY>` to get started.\n"
-        "🎨 Then send `/gen <your prompt>` to create amazing images.",
+        "🎨 send `/gen <your prompt>` to create amazing images.",
         parse_mode="Markdown",
         reply_to_message_id=update.message.message_id
     )
