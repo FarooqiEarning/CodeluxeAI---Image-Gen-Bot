@@ -140,7 +140,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🖼️ Prompt: `{escape_md(short_prompt)}`\n"
             f"🕒 Generation Time: `{round(time_spent, 2)} seconds`\n\n"
             f"🤖 Bot created by [Muhammad Gohar](tg://user?id={OWNER_ID})\n"
-            f"👑 Bot Owner: [Mohammad Elmaymouny](tg://user?id={7750893567})\n"
+            f"👑 Hypothetical Bot Owner: [Mohammad Elmaymouny](tg://user?id={7750893567})\n"
             f"*Powered by [Converso AI](https://conversoai.stylefort.store)*"
         )
 
