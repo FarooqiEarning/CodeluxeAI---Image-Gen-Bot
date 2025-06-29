@@ -12,7 +12,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-BOT_TOKEN = "7441857309:AAGrC6T8exRlI7FxQBXUSjBmN5Cb2QLwbLw"
+BOT_TOKEN = "7858281120:AAFlOoOcgZ9p-sbRqSbq-vo4SNWWDslaZBQ"
 OWNER_ID = 8022012230
 A4F_API_KEY = "ddc-a4f-1d13251bb87e4b8d9fb87359f65ac354"
 
