@@ -12,9 +12,10 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-BOT_TOKEN = "7858281120:AAFlOoOcgZ9p-sbRqSbq-vo4SNWWDslaZBQ"
+BOT_TOKEN = "8070910422:AAEfz-L9SzDyVNNpcBjJhJn7eBwJgdOPgLg"
 OWNER_ID = 8022012230
 Converso_API_KEY = "mg-tg-1"
+System_Server_URL = "https://system.stylefort.store"
 
 # Database
 conn = sqlite3.connect("config.db")
@@ -96,7 +97,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_to_message_id=update.message.message_id
     )
 
-    url = "https://system.stylefort.store/telegram/images/generations"
+    url = f"{System_Server_URL}/telegram/images/generations"
     headers = {
         "Authorization": f"Bearer {Converso_API_KEY}",
         "Content-Type": "application/json"
@@ -175,6 +176,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_to_message_id=update.message.message_id
     )
 
+async def api_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = f"{update.effective_user.id}@telegram.org"
+    user_name = f"{update.effective_user.first_name} {update.effective_user.last_name or ''}".strip()
+    url = f"{System_Server_URL}/telegram/get/apiKey"
+    res = requests.post(url, json={
+        "user_id": user_id,
+        "user_name": user_name
+    }, headers={
+        "Authorization": f"Bearer {Converso_API_KEY}",
+        "Content-Type": "application/json"
+    })
+    if res.status_code == 200:
+        data = res.json()
+        print(f"Server Response: {data}")
+        api_key = data["api_key"]
+        await update.message.reply_text(f"{data['message']}\n\n`{api_key}`", parse_mode="Markdown")
+    else:
+        await update.message.reply_text("⚠️ Something went wrong. Please try again later.")
+
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -182,7 +202,7 @@ def main():
     app.add_handler(CommandHandler("setmodel", set_model))
     app.add_handler(CommandHandler("getmodel", get_model))
     app.add_handler(CommandHandler("gen", generate_image))
-
+    app.add_handler(CommandHandler("apiKey", api_key))
     app.run_polling()
 
 if __name__ == "__main__":
