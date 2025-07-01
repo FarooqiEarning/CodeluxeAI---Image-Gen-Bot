@@ -86,7 +86,13 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     prompt = " ".join(context.args)
-    model_id = get_model_id()
+    # Check if prompt contains 'm=un', use model_id 'un' if so, else use default
+    if "m=un" in prompt:
+        model_id = "un"
+        # Remove 'm=un' from the prompt for cleaner output
+        prompt = prompt.replace("m=un", "").strip()
+    else:
+        model_id = get_model_id()
     username = update.effective_user.first_name or "User"
     from datetime import datetime
     start_time = datetime.now()
