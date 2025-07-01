@@ -96,7 +96,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_to_message_id=update.message.message_id
     )
 
-    url = "https://api.stylefort.store/telegram/images/generations"
+    url = "https://system.stylefort.store/telegram/images/generations"
     headers = {
         "Authorization": f"Bearer {Converso_API_KEY}",
         "Content-Type": "application/json"
