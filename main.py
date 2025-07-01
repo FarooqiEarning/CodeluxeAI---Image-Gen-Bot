@@ -14,7 +14,7 @@ logging.basicConfig(
 
 BOT_TOKEN = "7858281120:AAFlOoOcgZ9p-sbRqSbq-vo4SNWWDslaZBQ"
 OWNER_ID = 8022012230
-A4F_API_KEY = "ddc-a4f-1d13251bb87e4b8d9fb87359f65ac354"
+Converso_API_KEY = "mg-tg-1"
 
 # Database
 conn = sqlite3.connect("config.db")
@@ -96,9 +96,9 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_to_message_id=update.message.message_id
     )
 
-    url = "https://api.a4f.co/v1/images/generations"
+    url = "https://api.stylefort.store/telegram/images/generations"
     headers = {
-        "Authorization": f"Bearer {A4F_API_KEY}",
+        "Authorization": f"Bearer {Converso_API_KEY}",
         "Content-Type": "application/json"
     }
     data = {
@@ -112,7 +112,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response.raise_for_status()
         result = response.json()
 
-        image_url = result['data'][0]['url']
+        image_url = result.get("url")
         if not image_url:
             await update.message.reply_text(
                 "❌ *No image generated.* Try a more detailed prompt.",
