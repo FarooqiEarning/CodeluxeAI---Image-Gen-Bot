@@ -7,6 +7,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from aiohttp import web
 import asyncio
 import nest_asyncio
+import sys
+import argparse
 
 # Logging setup
 logging.basicConfig(
@@ -14,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-BOT_TOKEN = "8070910422:AAEfz-L9SzDyVNNpcBjJhJn7eBwJgdOPgLg"
+BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
 OWNER_ID = 8022012230
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
@@ -264,24 +266,27 @@ async def handle_generate(request):
     await generate_and_post_image(request.app['bot'], chat_id, prompt, System_Server_URL, Converso_API_KEY, get_model_id(), reply_to_message_id=message_id, username=username, user_id=userid)
     return web.json_response({'status': 'ok'})
 
-async def start_web_server(bot):
+async def start_web_server(bot, port=8080):
     app = web.Application()
     app['bot'] = bot
     app.router.add_post('/generate', handle_generate)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
 
 # --- Main Entrypoint ---
 async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, default=8080, help='Port for web server')
+    args = parser.parse_args()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("setmodel", set_model))
     app.add_handler(CommandHandler("getmodel", get_model))
     app.add_handler(CommandHandler("gen", generate_image))
     app.add_handler(CommandHandler("apiKey", api_key))
-    asyncio.create_task(start_web_server(app.bot))
+    asyncio.create_task(start_web_server(app.bot, port=args.port))
     await app.run_polling()
 
 if __name__ == "__main__":
