@@ -7,7 +7,6 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from aiohttp import web
 import asyncio
 import nest_asyncio
-from pyngrok import ngrok
 
 # Logging setup
 logging.basicConfig(
@@ -15,7 +14,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
+BOT_TOKEN = "8070910422:AAEfz-L9SzDyVNNpcBjJhJn7eBwJgdOPgLg"
 OWNER_ID = 8022012230
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
@@ -273,28 +272,6 @@ async def start_web_server(bot):
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', 8080)
     await site.start()
-    public_url = ngrok.connect(8080, "http")
-    logging.info(f"🌐 Public URL for /generate: {public_url}/generate")
-    print(f"🌐 Public URL for /generate: {public_url}/generate")
-    import re
-    def extract_ngrok_url(text):
-        """
-        Extracts the first Ngrok URL from the given text.
-        If no Ngrok URL is found, returns None.
-        """
-        match = re.search(r'https://[^\s"]+\.ngrok-free\.app', text)
-        if match:
-            return match.group(0)
-        return None
-    # Extract the public URL from the ngrok output
-    public_url = extract_ngrok_url(str(public_url))
-    requests.post(
-        f"{System_Server_URL}/telegram/webhook",
-        json={"url": f"{public_url}/generate"},
-        headers={
-            "Authorization": f"Bearer {Converso_API_KEY}"
-        }
-    )
 
 # --- Main Entrypoint ---
 async def main():
@@ -306,7 +283,6 @@ async def main():
     app.add_handler(CommandHandler("apiKey", api_key))
     asyncio.create_task(start_web_server(app.bot))
     await app.run_polling()
-    
 
 if __name__ == "__main__":
     nest_asyncio.apply()
