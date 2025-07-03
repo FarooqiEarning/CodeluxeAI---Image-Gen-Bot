@@ -15,7 +15,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-
+Test_BOT_TOKEN = "8070910422:AAEfz-L9SzDyVNNpcBjJhJn7eBwJgdOPgLg"
 BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
 OWNER_ID = 8022012230
 Converso_API_KEY = "mg-tg-1"
@@ -126,6 +126,15 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     prompt = " ".join(context.args)
+    if len(prompt.split()) < 3:
+        await update.message.reply_text(
+            "🚫 *Your prompt is too short!*\n\n"
+            "✨ Please provide a more descriptive prompt with at least *three words* for image generation.\n"
+            "_Example:_ `/gen A futuristic neon cityscape`",
+            parse_mode="Markdown",
+            reply_to_message_id=update.message.message_id if update.message else None
+        )
+        return
     if "m=un" in prompt:
         model_id = "un"
         prompt = prompt.replace("m=un", "").strip()
