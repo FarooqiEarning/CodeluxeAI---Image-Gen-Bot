@@ -173,6 +173,14 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if n_match:
         n = int(n_match.group(1))
         prompt = re.sub(r"n=\d+", "", prompt).strip()
+    if n < 5:
+        await update.message.reply_text(
+            "⚠️ *The maximum number of images is 4.*\n"
+            "✨ Please reduce the number of images you want to generate.",
+            parse_mode="Markdown",
+            reply_to_message_id=update.message.message_id if update.message else None
+        )
+        return
     if len(prompt.split()) < 3:
         await update.message.reply_text(
             "🚫 *Your prompt is too short!*\n\n"
