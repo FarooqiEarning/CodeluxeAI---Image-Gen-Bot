@@ -183,7 +183,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     if "m=un" in prompt:
-        model_id = "un"
+        model_id = "uncen"
         prompt = prompt.replace("m=un", "").strip()
     else:
         model_id = get_model_id()
