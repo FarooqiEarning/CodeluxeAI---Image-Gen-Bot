@@ -207,6 +207,8 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
     if n:
         data["n"] = n
+    else:
+        data["n"] = 1
     try:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
