@@ -398,7 +398,7 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=8080, help='Port for web server')
     args = parser.parse_args()
-    app = ApplicationBuilder().token(Test_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("setmodel", set_model))
     app.add_handler(CommandHandler("getmodel", get_model))
