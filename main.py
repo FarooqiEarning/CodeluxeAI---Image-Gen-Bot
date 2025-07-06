@@ -15,9 +15,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-Test_BOT_TOKEN = "8070910422:AAEfz-L9SzDyVNNpcBjJhJn7eBwJgdOPgLg"
+Test_BOT_TOKEN = "8070910422:AAFSpBMliJpaMu_R38iUBl41pM-PVJVMOQE"
 BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
 OWNER_ID = 8022012230
+Group_id = -4722355872
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
 
@@ -159,6 +160,13 @@ async def send_generated_album(
 
 # --- Telegram Bot Commands (continued) ---
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.id != Group_id and update.effective_user.id != OWNER_ID:
+        await update.message.reply_text(
+            "❌ Not Allowed in Private Chats.\n You can only use this command in the [Converso AI - Chat Group](https://t.me/conversoai_chat)",
+            parse_mode="Markdown",
+            reply_to_message_id=update.message.message_id if update.message else None
+        )
+        return
     if not context.args:
         await update.message.reply_text(
             "⚡ *Provide a prompt.*\n_Example:_ `/gen A cyberpunk dragon at night`",
@@ -168,12 +176,12 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     prompt = " ".join(context.args)
     import re
-    n = None
+    n = 1  # Default to 1
     n_match = re.search(r"n=(\d+)", prompt)
     if n_match:
         n = int(n_match.group(1))
         prompt = re.sub(r"n=\d+", "", prompt).strip()
-    if n < 5:
+    if n > 4:
         await update.message.reply_text(
             "⚠️ *The maximum number of images is 4.*\n"
             "✨ Please reduce the number of images you want to generate.",
@@ -390,7 +398,7 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=8080, help='Port for web server')
     args = parser.parse_args()
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(Test_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("setmodel", set_model))
     app.add_handler(CommandHandler("getmodel", get_model))
