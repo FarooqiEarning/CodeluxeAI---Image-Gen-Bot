@@ -19,6 +19,7 @@ Test_BOT_TOKEN = "8070910422:AAFSpBMliJpaMu_R38iUBl41pM-PVJVMOQE"
 BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
 OWNER_ID = 8022012230
 Group_id = -4722355872
+Test_Group_id = -1002287883481
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
 
