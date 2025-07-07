@@ -19,6 +19,7 @@ Test_BOT_TOKEN = "8070910422:AAFSpBMliJpaMu_R38iUBl41pM-PVJVMOQE"
 BOT_TOKEN = "7858281120:AAFqSrFzk0L9dwe7JwwyZPOcdvXmOcLK3Ao"
 OWNER_ID = 8022012230
 Group_id = -4722355872
+Group_chat_id = -1002866919101
 Test_Group_id = -1002287883481
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
@@ -162,7 +163,7 @@ async def send_generated_album(
 # --- Telegram Bot Commands (continued) ---
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(update.effective_chat.id, update.effective_user.id)
-    if update.effective_chat.id not in [OWNER_ID, Group_id]:
+    if update.effective_chat.id not in [OWNER_ID, Group_id, Group_chat_id, Test_Group_id]:
         await update.message.reply_text(
             "❌ Not Allowed in Private Chats.\n You can only use this command in the [Converso AI - Chat Group](https://t.me/conversoai_chat)",
             parse_mode="Markdown",
