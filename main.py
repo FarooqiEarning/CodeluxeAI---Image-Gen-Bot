@@ -162,14 +162,13 @@ async def send_generated_album(
 # --- Telegram Bot Commands (continued) ---
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(update.effective_chat.id, update.effective_user.id)
-    if update.effective_user.id != OWNER_ID:
-        if update.effective_chat.id != Group_id:
-            await update.message.reply_text(
-                "❌ Not Allowed in Private Chats.\n You can only use this command in the [Converso AI - Chat Group](https://t.me/conversoai_chat)",
-                parse_mode="Markdown",
-                reply_to_message_id=update.message.message_id if update.message else None
-            )
-            return
+    if update.effective_chat.id not in [OWNER_ID, Group_id]:
+        await update.message.reply_text(
+            "❌ Not Allowed in Private Chats.\n You can only use this command in the [Converso AI - Chat Group](https://t.me/conversoai_chat)",
+            parse_mode="Markdown",
+            reply_to_message_id=update.message.message_id if update.message else None
+        )
+        return
     if not context.args:
         await update.message.reply_text(
             "⚡ *Provide a prompt.*\n_Example:_ `/gen A cyberpunk dragon at night`",
