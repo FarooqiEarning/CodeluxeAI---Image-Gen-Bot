@@ -1,14 +1,10 @@
 import logging
-import sqlite3
 import requests
 from io import BytesIO
-from telegram import Update, InputFile, InputMediaPhoto
+from telegram import Update, InputFile, InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from aiohttp import web
 import asyncio
 import nest_asyncio
-import sys
-import argparse
 
 # Logging setup
 logging.basicConfig(
@@ -22,54 +18,52 @@ Group_id = -4722355872
 Group_chat_id = -1002866919101
 Test_Group_id = -1002287883481
 Converso_API_KEY = "mg-tg-1"
-System_Server_URL = "https://system.stylefort.store"
-
-# Database
-conn = sqlite3.connect("config.db")
-cursor = conn.cursor()
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS config (
-    key TEXT PRIMARY KEY,
-    value TEXT
-)
-""")
-conn.commit()
-
-def get_model_id():
-    cursor.execute("SELECT value FROM config WHERE key = 'model_id'")
-    row = cursor.fetchone()
-    return row[0] if row else "img3"
+System_Server_URL = "http://localhost:8080"
 
 def escape_md(text: str) -> str:
     for ch in '_*[]`()~>#+=-|{}.!':
         text = text.replace(ch, f'\\{ch}')
     return text
 
-# --- Telegram Bot Commands ---
-async def set_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        await update.message.reply_text("⛔ You are not authorized.")
-        return
-    if not context.args:
-        await update.message.reply_text("Usage: /setmodel <MODEL_ID>")
-        return
-    model_id = context.args[0]
-    cursor.execute("REPLACE INTO config (key, value) VALUES ('model_id', ?)", (model_id,))
-    conn.commit()
-    await update.message.reply_text(f"✅ Model ID set to `{model_id}`")
-
-async def get_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != OWNER_ID:
-        await update.message.reply_text("⛔ You are not authorized.")
-        return
-    model_id = get_model_id()
-    await update.message.reply_text(f"📌 Current Model ID: `{model_id}`")
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 Welcome! Use `/gen <prompt>` or send API requests to generate images.")
-
 # --- Shared image sending logic for both command and API ---
+async def Start_apiKey(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("❗ Please provide an API key.")
+        return
+
+    random_key = context.args[0]
+    user = update.effective_user
+    user_id = f"{user.id}@telegram.org"
+    user_name = f"{user.first_name} {user.last_name or ''}".strip()
+    try:
+        resp = requests.post(
+            f"{System_Server_URL}/telegram/get/apiKey",
+            json={"user_id": user_id, "user_name": user_name, "key": random_key},
+            headers={"Authorization": f"Bearer {Converso_API_KEY}", "Content-Type": "application/json"},
+            timeout=10
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        if data.get("key") != random_key or not data.get("data") or not data.get("base"):
+            await update.message.reply_text("⚠️ Invalid or incomplete response. Please try again.")
+            return
+
+        login_url = f"https://conversoai.stylefort.store/login?data={data['data']}&base={data['base']}"
+        buttons = [[InlineKeyboardButton("🔐 Login", url=login_url)]]
+        await update.message.reply_text(
+            "✅ Click the button below to access your dashboard:",
+            reply_markup=InlineKeyboardMarkup(buttons),
+            parse_mode="Markdown"
+        )
+
+    except requests.exceptions.RequestException:
+        await update.message.reply_text("🚨 Unable to reach server. Please try again later.")
+    except Exception:
+        # Only send error message if login button message (`sent`) hasn't been sent yet:
+        if not locals().get("sent"):
+            await update.message.reply_text("⚠️ An unexpected error occurred. Please try again.")
+
 async def send_generated_image(
     bot_or_update, chat_id, prompt, image_url, time_spent, username=None, user_id=None, reply_to_message_id=None, is_api=False
 ):
@@ -160,6 +154,22 @@ async def send_generated_album(
             reply_to_message_id=reply_to_message_id
         )
 
+def max_n_check(model_id, maximum_images):
+    try:
+        response = requests.get("https://api.stylefort.store/v1/models")
+        response.raise_for_status()
+        models = response.json()
+    except requests.RequestException as e:
+        raise RuntimeError(f"Failed to fetch models: {e}")
+
+    for model in models:
+        if model.get("id") == model_id:
+            max_images = model.get("maximum_images", 0)
+            return {"max_n": max_images, "check": max_images >= maximum_images}
+
+    # If the model_id is not found
+    return {"max_n": 0, "check": False}
+
 # --- Telegram Bot Commands (continued) ---
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(update.effective_chat.id, update.effective_user.id)
@@ -184,9 +194,15 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if n_match:
         n = int(n_match.group(1))
         prompt = re.sub(r"n=\d+", "", prompt).strip()
-    if n > 4:
+    p_model = re.search(r"model=([\w-]+)", prompt)
+    if p_model:
+        model_id = p_model.group(1)
+    else:
+        model_id = "flux.1.1-pro"
+    check = max_n_check(model_id, n)
+    if not check.get("check"):
         await update.message.reply_text(
-            "⚠️ *The maximum number of images is 4.*\n"
+            f"⚠️ *The maximum number of images supported by this model: {model_id} is {check.get('max_n')}.*\n"
             "✨ Please reduce the number of images you want to generate.",
             parse_mode="Markdown",
             reply_to_message_id=update.message.message_id if update.message else None
@@ -201,11 +217,6 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_to_message_id=update.message.message_id if update.message else None
         )
         return
-    if "m=un" in prompt:
-        model_id = "uncen"
-        prompt = prompt.replace("m=un", "").strip()
-    else:
-        model_id = get_model_id()
     username = update.effective_user.first_name or "User"
     user_id = update.effective_user.id
     from datetime import datetime
@@ -222,16 +233,17 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
     data = {
         "model": model_id,
-        "prompt": prompt
+        "prompt": prompt,
     }
     if n:
         data["n"] = n
     else:
         data["n"] = 1
+    print(f"Requesting image generation with data: {data}")
     try:
         response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
         result = response.json()
+        print(f"API Response: {result}")
         # If result is a list, treat as album, else as single image
         if isinstance(result, list):
             image_urls = [img_obj.get("url") for img_obj in result if img_obj.get("url")]
@@ -295,119 +307,12 @@ async def api_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("⚠️ Something went wrong. Please try again later.")
 
-# --- Internal HTTP Server for API ---
-async def generate_and_post_image(bot, chat_id, prompt, server_url, api_key, model_id, reply_to_message_id=None, username=None, user_id=None, n=1):
-    from datetime import datetime
-    start_time = datetime.now()
-    send_message_kwargs = {
-        'chat_id': chat_id,
-        'text': f"🎨 Generating image for: `{escape_md(prompt)}`",
-        'parse_mode': "MarkdownV2"
-    }
-    if isinstance(reply_to_message_id, int) and reply_to_message_id > 0:
-        send_message_kwargs['reply_to_message_id'] = reply_to_message_id
-    await bot.send_message(**send_message_kwargs)
-    url = f"{server_url}/telegram/images/generations"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": model_id,
-        "prompt": prompt
-    }
-    if n:
-        data["n"] = n
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        result = response.json()
-        if isinstance(result, list):
-            image_urls = [img_obj.get("url") for img_obj in result if img_obj.get("url")]
-            if not image_urls:
-                error_kwargs = {
-                    'chat_id': chat_id,
-                    'text': "❌ *No image generated.* Try a more detailed prompt.",
-                    'parse_mode': "Markdown"
-                }
-                if isinstance(reply_to_message_id, int) and reply_to_message_id > 0:
-                    error_kwargs['reply_to_message_id'] = reply_to_message_id
-                await bot.send_message(**error_kwargs)
-                return
-            time_spent = (datetime.now() - start_time).total_seconds()
-            await send_generated_album(
-                bot, chat_id, prompt, image_urls, time_spent,
-                username=username, user_id=user_id, reply_to_message_id=reply_to_message_id if isinstance(reply_to_message_id, int) and reply_to_message_id > 0 else None, is_api=True
-            )
-            return
-        image_url = result.get("url")
-        if not image_url:
-            error_kwargs = {
-                'chat_id': chat_id,
-                'text': "❌ *No image generated.* Try a more detailed prompt.",
-                'parse_mode': "Markdown"
-            }
-            if isinstance(reply_to_message_id, int) and reply_to_message_id > 0:
-                error_kwargs['reply_to_message_id'] = reply_to_message_id
-            await bot.send_message(**error_kwargs)
-            return
-        time_spent = (datetime.now() - start_time).total_seconds()
-        await send_generated_image(
-            bot, chat_id, prompt, image_url, time_spent,
-            username=username, user_id=user_id, reply_to_message_id=reply_to_message_id if isinstance(reply_to_message_id, int) and reply_to_message_id > 0 else None, is_api=True
-        )
-    except Exception as e:
-        logging.error(f"Image generation failed: {e}")
-        error_kwargs = {
-            'chat_id': chat_id,
-            'text': "❌ *Failed to generate image.* Please try again later.",
-            'parse_mode': "Markdown"
-        }
-        if isinstance(reply_to_message_id, int) and reply_to_message_id > 0:
-            error_kwargs['reply_to_message_id'] = reply_to_message_id
-        await bot.send_message(**error_kwargs)
-
-async def handle_generate(request):
-    data = await request.json()
-    prompt = data.get('prompt')
-    chat_id = data.get('chat_id')
-    message_id = data.get('message_id')
-    username = data.get('username')
-    userid = data.get('user_id')
-    n = data.get('n', None)
-    try:
-        n = int(n)
-        if n < 1:
-            n = 1
-    except (TypeError, ValueError):
-        n = 1
-    print(f"Received request to generate image: chat_id={chat_id}, message_id={message_id}, username={username}, user_id={userid}, n={n}")
-    if not prompt or not chat_id:
-        return web.json_response({'status': 'error', 'reason': 'missing data'}, status=400)
-    await generate_and_post_image(request.app['bot'], chat_id, prompt, System_Server_URL, Converso_API_KEY, get_model_id(), reply_to_message_id=message_id, username=username, user_id=userid, n=n)
-    return web.json_response({'status': 'ok'})
-
-async def start_web_server(bot, port=8080):
-    app = web.Application()
-    app['bot'] = bot
-    app.router.add_post('/generate', handle_generate)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-
 # --- Main Entrypoint ---
 async def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=8080, help='Port for web server')
-    args = parser.parse_args()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("setmodel", set_model))
-    app.add_handler(CommandHandler("getmodel", get_model))
+    app.add_handler(CommandHandler("start", Start_apiKey))
     app.add_handler(CommandHandler("gen", generate_image))
     app.add_handler(CommandHandler("apiKey", api_key))
-    asyncio.create_task(start_web_server(app.bot, port=args.port))
     await app.run_polling()
 
 if __name__ == "__main__":
