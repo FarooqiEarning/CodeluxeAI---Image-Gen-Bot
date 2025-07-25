@@ -18,7 +18,7 @@ Group_id = -4722355872
 Group_chat_id = -1002866919101
 Test_Group_id = -1002287883481
 Converso_API_KEY = "mg-tg-1"
-System_Server_URL = "http://localhost:8080"
+System_Server_URL = "https://system.stylefort.store"
 
 def escape_md(text: str) -> str:
     for ch in '_*[]`()~>#+=-|{}.!':
