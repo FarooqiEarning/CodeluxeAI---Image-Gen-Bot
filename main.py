@@ -14,9 +14,6 @@ logging.basicConfig(
 Test_BOT_TOKEN = "8070910422:AAFSpBMliJpaMu_R38iUBl41pM-PVJVMOQE"
 BOT_TOKEN = "7858281120:AAEjH236OIMmE5Pl_U5N4JpNehJ9eoGDjfw"
 OWNER_ID = 8022012230
-Group_id = -4722355872
-Group_chat_id = -1002866919101
-Test_Group_id = -1002287883481
 Converso_API_KEY = "mg-tg-1"
 System_Server_URL = "https://system.stylefort.store"
 
@@ -96,13 +93,6 @@ def max_n_check(model_id, maximum_images):
 # --- Telegram Bot Commands (continued) ---
 async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(update.effective_chat.id, update.effective_user.id)
-    if update.effective_chat.id not in [OWNER_ID, Group_id, Group_chat_id, Test_Group_id]:
-        await update.message.reply_text(
-            "❌ Not Allowed in Private Chats.\n You can only use this command in the [Converso AI - Chat Group](https://t.me/conversoai_chat)",
-            parse_mode="Markdown",
-            reply_to_message_id=update.message.message_id if update.message else None
-        )
-        return
     if not context.args:
         await update.message.reply_text(
             "⚡ *Provide a prompt.*\n_Example:_ `/gen A cyberpunk dragon at night`",
@@ -118,7 +108,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         n = int(n_match.group(1))
         prompt = re.sub(r"n=\d+", "", prompt).strip()
 
-    model_id = "flux.1.1-pro"
+    model_id = "flux.1-dev"
     m_match = re.search(r"m=([\w\.-]+)", prompt)
     if m_match:
         model_id = m_match.group(1)
@@ -233,7 +223,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "`/gen your prompt m={model_id}` - Use specific model\n\n"
         "💡 *Tips:*\n"
         "• Use descriptive prompts (min 3 words)\n"
-        "• Combine parameters: `/gen sunset n=2 m=flux.1.1-pro`\n\n"
+        "• Combine parameters: `/gen sunset n=2 m=flux.1-dev`\n\n"
         "🤖 *For Models Visit:* [Converso AI - Image Models](https://conversoai.stylefort.store/models)\n"
         "Join our [Chat Group](https://t.me/conversoai_chat) for support!"
     )
