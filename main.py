@@ -108,7 +108,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         n = int(n_match.group(1))
         prompt = re.sub(r"n=\d+", "", prompt).strip()
 
-    model_id = "flux.1-dev"
+    model_id = "imagen-3"
     m_match = re.search(r"m=([\w\.-]+)", prompt)
     if m_match:
         model_id = m_match.group(1)
