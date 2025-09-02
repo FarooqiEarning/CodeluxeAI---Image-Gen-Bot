@@ -15,7 +15,7 @@ Test_BOT_TOKEN = "8070910422:AAFSpBMliJpaMu_R38iUBl41pM-PVJVMOQE"
 BOT_TOKEN = "7858281120:AAEjH236OIMmE5Pl_U5N4JpNehJ9eoGDjfw"
 OWNER_ID = 8022012230
 Converso_API_KEY = "mg-tg-1"
-System_Server_URL = "https://system.stylefort.store"
+Server_URL = "https://api.stylefort.store"
 
 def escape_md(text: str) -> str:
     for ch in '_*[]`()~>#+=-|{}.!':
@@ -77,7 +77,7 @@ async def send_generated_album(
 
 def max_n_check(model_id, maximum_images):
     try:
-        response = requests.get("https://api.stylefort.store/v1/models")
+        response = requests.get(f"{Server_URL}/v1/models")
         response.raise_for_status()
         models = response.json()
     except requests.RequestException as e:
@@ -150,7 +150,7 @@ async def generate_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="MarkdownV2",
         reply_to_message_id=update.message.message_id if update.message else None
     )
-    url = f"{System_Server_URL}/telegram/images/generations"
+    url = f"{Server_URL}/telegram/images/generations"
     headers = {
         "Authorization": f"Bearer {Converso_API_KEY}",
         "Content-Type": "application/json"
